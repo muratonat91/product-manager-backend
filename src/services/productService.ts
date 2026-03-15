@@ -121,3 +121,15 @@ export const deleteProduct = async (id: number): Promise<void> => {
 export const deleteProductImage = async (imageId: number): Promise<void> => {
   await pool.query('DELETE FROM product_images WHERE id=$1', [imageId]);
 };
+
+export const addProductImages = async (productId: number, imagePaths: string[]): Promise<{ id: number; image_path: string }[]> => {
+  const inserted: { id: number; image_path: string }[] = [];
+  for (const imgPath of imagePaths) {
+    const r = await pool.query(
+      'INSERT INTO product_images (product_id, image_path) VALUES ($1, $2) RETURNING id, image_path',
+      [productId, imgPath]
+    );
+    inserted.push(r.rows[0]);
+  }
+  return inserted;
+};

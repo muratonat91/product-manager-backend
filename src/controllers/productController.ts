@@ -105,3 +105,13 @@ export const removeImage = async (req: Request, res: Response): Promise<void> =>
     res.json({ message: 'Image deleted' });
   } catch (e: any) { res.status(400).json({ message: e.message }); }
 };
+
+export const addImages = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const files = req.files as Express.Multer.File[];
+    if (!files || files.length === 0) { res.status(400).json({ message: 'No images provided' }); return; }
+    const imagePaths = files.map(f => `/uploads/${f.filename}`);
+    const images = await productService.addProductImages(+req.params.id, imagePaths);
+    res.status(201).json(images);
+  } catch (e: any) { res.status(400).json({ message: e.message }); }
+};

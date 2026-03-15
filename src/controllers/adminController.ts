@@ -66,6 +66,20 @@ export const deleteProduct = async (req: AuthRequest, res: Response): Promise<vo
   res.json({ message: 'Deleted' });
 };
 
+export const setUserRole = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { id } = req.params;
+  const { role } = req.body;
+  if (!['user', 'superuser', 'admin'].includes(role)) {
+    res.status(400).json({ message: 'Geçersiz rol' }); return;
+  }
+  const result = await pool.query(
+    'UPDATE users SET role=$1 WHERE id=$2 RETURNING id, name, email, role, is_approved',
+    [role, id]
+  );
+  if (result.rows.length === 0) { res.status(404).json({ message: 'User not found' }); return; }
+  res.json(result.rows[0]);
+};
+
 export const getProjectProducts = async (req: AuthRequest, res: Response): Promise<void> => {
   const { projectId } = req.params;
   const products = await pool.query(

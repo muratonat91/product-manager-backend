@@ -18,6 +18,7 @@ router.post('/', upload.array('images', 10), productController.create);
 router.delete('/image/:imageId', productController.removeImage);
 router.get('/:id/usage', productController.usage);
 router.post('/:id/copy', productController.copy);
+router.post('/:id/images', upload.array('images', 10), productController.addImages);
 router.put('/:id', productController.update);
 router.delete('/:id', productController.remove);
 export default router;
