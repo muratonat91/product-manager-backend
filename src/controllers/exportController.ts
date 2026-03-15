@@ -103,9 +103,9 @@ export const exportProjectExcel = async (req: Request, res: Response): Promise<v
   try {
     const projectId = +req.params.id;
 
-    const projRes = await pool.query('SELECT * FROM projects WHERE id=$1', [projectId]);
-    if (!projRes.rows.length) { res.status(404).json({ message: 'Not found' }); return; }
-    const project = projRes.rows[0];
+    const [projRows]: any = await pool.query('SELECT * FROM projects WHERE id = ?', [projectId]);
+    if (!projRows.length) { res.status(404).json({ message: 'Not found' }); return; }
+    const project = projRows[0];
     const products = await getProductsByProject(projectId);
 
     // Group by mix_type, preserving insertion order
@@ -124,23 +124,14 @@ export const exportProjectExcel = async (req: Request, res: Response): Promise<v
       pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, paperSize: 9 },
     });
 
-    // Layout:
-    //   Col A        = field labels (bold)
-    //   Col B, C, D… = one column per product (side by side)
-    // When a new product of the same mix_type arrives it fills the next column.
-
     const maxProds = Math.max(...Array.from(groups.values()).map(g => g.length), 1);
-    const totalCols = maxProds + 1; // col A (labels) + product columns
+    const totalCols = maxProds + 1;
 
-    // Column widths
     ws.getColumn(1).width = 28;
     for (let c = 2; c <= totalCols; c++) ws.getColumn(c).width = 22;
 
     let row = 1;
 
-    // ══════════════════════════
-    // TITLE BANNER
-    // ══════════════════════════
     ws.getRow(row).height = 48;
     const title = ws.getCell(`A${row}`);
     title.value = '📋  PROJE ÜRÜN RAPORU';
@@ -150,9 +141,6 @@ export const exportProjectExcel = async (req: Request, res: Response): Promise<v
     ws.mergeCells(`A${row}:${colLetter(totalCols)}${row}`);
     row++;
 
-    // ══════════════════════════
-    // PROJECT INFO
-    // ══════════════════════════
     const infoRows: [string, string][] = [
       ['Müşteri Adı', project.customer_name],
       ['Konum',       project.customer_location],
@@ -184,16 +172,12 @@ export const exportProjectExcel = async (req: Request, res: Response): Promise<v
       row++;
     }
 
-    row++; // spacer
+    row++;
 
-    // ══════════════════════════
-    // PRODUCT GROUPS
-    // ══════════════════════════
     for (const [mixType, grpProducts] of groups) {
       const numP    = grpProducts.length;
-      const grpEnd  = colLetter(numP + 1); // label col + numP product cols
+      const grpEnd  = colLetter(numP + 1);
 
-      // ── Mix type header ──────────────────────────
       ws.getRow(row).height = 32;
       const mh = ws.getCell(`A${row}`);
       mh.value = `  🍦  Mix Tipi: ${mixType}  (${numP} ürün)`;
@@ -203,7 +187,6 @@ export const exportProjectExcel = async (req: Request, res: Response): Promise<v
       ws.mergeCells(`A${row}:${grpEnd}${row}`);
       row++;
 
-      // ── Column headers: "Özellik" | Product 1 | Product 2 | … ──
       ws.getRow(row).height = 28;
       const fhCell = ws.getCell(`A${row}`);
       fhCell.value = 'Özellik';
@@ -228,7 +211,6 @@ export const exportProjectExcel = async (req: Request, res: Response): Promise<v
       }
       row++;
 
-      // ── Field rows (skip fields where ALL products are null) ──
       let fieldIdx = 0;
       for (const [key, label] of FIELDS) {
         if (grpProducts.every(p => (p as any)[key] === null || (p as any)[key] === undefined)) continue;
@@ -236,7 +218,6 @@ export const exportProjectExcel = async (req: Request, res: Response): Promise<v
         const rowBg = fieldIdx % 2 === 0 ? P.rowEven : P.rowOdd;
         ws.getRow(row).height = 20;
 
-        // Label cell
         const lc = ws.getCell(`A${row}`);
         lc.value = label;
         lc.font = { bold: true, size: 10, color: { argb: P.dark }, name: 'Calibri' };
@@ -247,7 +228,6 @@ export const exportProjectExcel = async (req: Request, res: Response): Promise<v
           bottom: { style: 'thin',   color: { argb: P.sep } },
         };
 
-        // One value cell per product
         for (let i = 0; i < numP; i++) {
           const c = ws.getCell(`${colLetter(i + 2)}${row}`);
           c.value = fmt((grpProducts[i] as any)[key]);
@@ -263,10 +243,8 @@ export const exportProjectExcel = async (req: Request, res: Response): Promise<v
         fieldIdx++;
       }
 
-      // ── Images section ────────────────────────────
       const maxImgs = Math.max(...grpProducts.map(p => p.images?.length ?? 0));
       if (maxImgs > 0) {
-        // Images header
         ws.getRow(row).height = 24;
         const ih = ws.getCell(`A${row}`);
         ih.value = '  📷  Görseller';
@@ -280,7 +258,6 @@ export const exportProjectExcel = async (req: Request, res: Response): Promise<v
           const IMG_H = 130;
           ws.getRow(row).height = 100;
 
-          // Label
           const lc = ws.getCell(`A${row}`);
           lc.value = `Görsel ${imgIdx + 1}`;
           lc.font = { bold: true, size: 9, color: { argb: P.muted }, name: 'Calibri' };
@@ -291,9 +268,8 @@ export const exportProjectExcel = async (req: Request, res: Response): Promise<v
             bottom: { style: 'thin',   color: { argb: P.greenBorder } },
           };
 
-          // One image cell per product (same row → side by side)
           for (let i = 0; i < numP; i++) {
-            const colIdx = i + 2; // 1-indexed Excel column
+            const colIdx = i + 2;
             const imgCell = ws.getCell(`${colLetter(colIdx)}${row}`);
             imgCell.fill = bg(P.greenLight);
             imgCell.border = {
@@ -307,7 +283,6 @@ export const exportProjectExcel = async (req: Request, res: Response): Promise<v
               if (fs.existsSync(fsPath)) {
                 try {
                   const imageId = wb.addImage({ filename: fsPath, extension: imgExt(fsPath) });
-                  // tl is 0-indexed: col A=0, col B=1, …
                   ws.addImage(imageId, {
                     tl: { col: colIdx - 1, row: row - 1 },
                     ext: { width: 160, height: IMG_H },
@@ -321,10 +296,9 @@ export const exportProjectExcel = async (req: Request, res: Response): Promise<v
         }
       }
 
-      row += 2; // gap between groups
+      row += 2;
     }
 
-    // ── Stream response ───────────────────────────
     const safeName = project.customer_name.replace(/[^a-zA-Z0-9\s-]/g, '').trim();
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(safeName + '-rapor')}.xlsx`);

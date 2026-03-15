@@ -14,22 +14,25 @@ export const registerUser = async (
   profile_photo?: string,
   preferred_language?: string
 ): Promise<Omit<User, 'password'>> => {
-  const exists = await pool.query('SELECT id FROM users WHERE email=$1', [email]);
-  if (exists.rows.length > 0) throw new Error('Email already in use');
+  const [rows]: any = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
+  if (rows.length > 0) throw new Error('Email already in use');
   const hash = await bcrypt.hash(password, 10);
-  const result = await pool.query(
+  const [result]: any = await pool.query(
     `INSERT INTO users (name, surname, email, password, phone, company, position, profile_photo, preferred_language)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-     RETURNING id, name, surname, email, role, is_approved, phone, company, position, profile_photo, preferred_language, created_at`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [name, surname || null, email, hash, phone || null, company || null, position || null, profile_photo || null, preferred_language || 'tr']
   );
-  return result.rows[0];
+  const [users]: any = await pool.query(
+    'SELECT id, name, surname, email, role, is_approved, phone, company, position, profile_photo, preferred_language, created_at FROM users WHERE id = ?',
+    [result.insertId]
+  );
+  return users[0];
 };
 
 export const loginUser = async (email: string, password: string): Promise<{ token: string; user: Omit<User, 'password'> }> => {
-  const result = await pool.query('SELECT * FROM users WHERE email=$1', [email]);
-  if (result.rows.length === 0) throw new Error('Invalid credentials');
-  const user: User = result.rows[0];
+  const [rows]: any = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+  if (rows.length === 0) throw new Error('Invalid credentials');
+  const user: User = rows[0];
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) throw new Error('Invalid credentials');
   if (!user.is_approved) throw new Error('PENDING_APPROVAL');

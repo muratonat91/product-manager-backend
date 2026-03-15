@@ -9,17 +9,17 @@ router.use(authMiddleware);
 
 // Lookup endpoints - available to all authenticated users
 router.get('/lookup/chains', async (req, res) => {
-  const { rows } = await pool.query('SELECT * FROM customer_chains ORDER BY name ASC');
+  const [rows]: any = await pool.query('SELECT * FROM customer_chains ORDER BY name ASC');
   res.json(rows);
 });
 router.get('/lookup/machine-types', async (req, res) => {
-  const { rows } = await pool.query('SELECT * FROM machine_types ORDER BY category ASC, name ASC');
+  const [rows]: any = await pool.query('SELECT * FROM machine_types ORDER BY category ASC, name ASC');
   res.json(rows);
 });
 
 router.get('/stats/summary', async (req, res) => {
   try {
-    const { rows } = await pool.query(`
+    const [rows]: any = await pool.query(`
       SELECT
         (SELECT COUNT(*) FROM products) AS products,
         (SELECT COUNT(*) FROM projects) AS projects,

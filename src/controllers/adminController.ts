@@ -3,36 +3,43 @@ import pool from '../config/database';
 import { AuthRequest } from '../middlewares/auth';
 
 export const getPendingUsers = async (_req: AuthRequest, res: Response): Promise<void> => {
-  const result = await pool.query(
-    'SELECT id, name, email, role, is_approved, created_at FROM users WHERE is_approved = false ORDER BY created_at ASC'
+  const [rows]: any = await pool.query(
+    'SELECT id, name, email, role, is_approved, created_at FROM users WHERE is_approved = 0 ORDER BY created_at ASC'
   );
-  res.json(result.rows);
+  res.json(rows);
 };
 
 export const getAllUsers = async (_req: AuthRequest, res: Response): Promise<void> => {
-  const result = await pool.query(
+  const [rows]: any = await pool.query(
     'SELECT id, name, email, role, is_approved, created_at FROM users ORDER BY created_at ASC'
   );
-  res.json(result.rows);
+  res.json(rows);
 };
 
 export const approveUser = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-  const result = await pool.query(
-    'UPDATE users SET is_approved = true WHERE id = $1 RETURNING id, name, email, role, is_approved',
+  const [result]: any = await pool.query(
+    'UPDATE users SET is_approved = 1 WHERE id = ?',
     [id]
   );
-  if (result.rows.length === 0) {
+  if (result.affectedRows === 0) {
     res.status(404).json({ message: 'User not found' });
     return;
   }
-  res.json(result.rows[0]);
+  const [rows]: any = await pool.query(
+    'SELECT id, name, email, role, is_approved FROM users WHERE id = ?',
+    [id]
+  );
+  res.json(rows[0]);
 };
 
 export const rejectUser = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-  const result = await pool.query('DELETE FROM users WHERE id = $1 AND role != $2 RETURNING id', [id, 'admin']);
-  if (result.rows.length === 0) {
+  const [result]: any = await pool.query(
+    "DELETE FROM users WHERE id = ? AND role != 'admin'",
+    [id]
+  );
+  if (result.affectedRows === 0) {
     res.status(404).json({ message: 'User not found or cannot delete admin' });
     return;
   }
@@ -40,29 +47,29 @@ export const rejectUser = async (req: AuthRequest, res: Response): Promise<void>
 };
 
 export const getAllProjects = async (_req: AuthRequest, res: Response): Promise<void> => {
-  const result = await pool.query(`
+  const [rows]: any = await pool.query(`
     SELECT p.*, u.name AS user_name, u.email AS user_email,
-           COUNT(pr.id)::int AS product_count
+           COUNT(pr.id) AS product_count
     FROM projects p
     JOIN users u ON u.id = p.user_id
     LEFT JOIN products pr ON pr.project_id = p.id
     GROUP BY p.id, u.name, u.email
     ORDER BY p.created_at DESC
   `);
-  res.json(result.rows);
+  res.json(rows);
 };
 
 export const deleteProject = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-  const result = await pool.query('DELETE FROM projects WHERE id=$1 RETURNING id', [id]);
-  if (result.rows.length === 0) { res.status(404).json({ message: 'Project not found' }); return; }
+  const [result]: any = await pool.query('DELETE FROM projects WHERE id = ?', [id]);
+  if (result.affectedRows === 0) { res.status(404).json({ message: 'Project not found' }); return; }
   res.json({ message: 'Deleted' });
 };
 
 export const deleteProduct = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-  const result = await pool.query('DELETE FROM products WHERE id=$1 RETURNING id', [id]);
-  if (result.rows.length === 0) { res.status(404).json({ message: 'Product not found' }); return; }
+  const [result]: any = await pool.query('DELETE FROM products WHERE id = ?', [id]);
+  if (result.affectedRows === 0) { res.status(404).json({ message: 'Product not found' }); return; }
   res.json({ message: 'Deleted' });
 };
 
@@ -72,24 +79,28 @@ export const setUserRole = async (req: AuthRequest, res: Response): Promise<void
   if (!['user', 'superuser', 'admin'].includes(role)) {
     res.status(400).json({ message: 'Geçersiz rol' }); return;
   }
-  const result = await pool.query(
-    'UPDATE users SET role=$1 WHERE id=$2 RETURNING id, name, email, role, is_approved',
+  const [result]: any = await pool.query(
+    'UPDATE users SET role = ? WHERE id = ?',
     [role, id]
   );
-  if (result.rows.length === 0) { res.status(404).json({ message: 'User not found' }); return; }
-  res.json(result.rows[0]);
+  if (result.affectedRows === 0) { res.status(404).json({ message: 'User not found' }); return; }
+  const [rows]: any = await pool.query(
+    'SELECT id, name, email, role, is_approved FROM users WHERE id = ?',
+    [id]
+  );
+  res.json(rows[0]);
 };
 
 export const getProjectProducts = async (req: AuthRequest, res: Response): Promise<void> => {
   const { projectId } = req.params;
-  const products = await pool.query(
-    'SELECT * FROM products WHERE project_id=$1 ORDER BY created_at DESC',
+  const [products]: any = await pool.query(
+    'SELECT * FROM products WHERE project_id = ? ORDER BY created_at DESC',
     [projectId]
   );
   const result = [];
-  for (const p of products.rows) {
-    const images = await pool.query('SELECT * FROM product_images WHERE product_id=$1', [p.id]);
-    result.push({ ...p, images: images.rows });
+  for (const p of products) {
+    const [images]: any = await pool.query('SELECT * FROM product_images WHERE product_id = ?', [p.id]);
+    result.push({ ...p, images });
   }
   res.json(result);
 };

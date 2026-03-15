@@ -1,0 +1,195 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "Admin",
+      "surname": "",
+      "email": "admin@admin.com",
+      "role": "admin",
+      "is_approved": true,
+      "phone": "",
+      "company": "Gram Equipment",
+      "position": "",
+      "profile_photo": "/uploads/avatars/1773615070117-pexels-monica-4756489.jpg",
+      "preferred_language": "en",
+      "created_at": "2026-03-15T22:44:42.000Z"
+    },
+    {
+      "id": 5,
+      "name": "murat",
+      "surname": "basar",
+      "email": "muratonat91@gmail.com",
+      "role": "user",
+      "is_approved": true,
+      "phone": null,
+      "company": "Gram Equipment",
+      "position": null,
+      "profile_photo": "/avatars/avatar-1.svg",
+      "preferred_language": "en",
+      "created_at": "2026-03-15T22:58:33.000Z"
+    }
+  ],
+  "customer_chains": [
+    {
+      "id": 3,
+      "name": "Magnum Ice Cream Co."
+    },
+    {
+      "id": 1,
+      "name": "Unilever"
+    },
+    {
+      "id": 2,
+      "name": "Wells"
+    }
+  ],
+  "machine_types": [
+    {
+      "id": 2,
+      "category": "Extrusion",
+      "name": "BT"
+    },
+    {
+      "id": 1,
+      "category": "Extrusion",
+      "name": "BT-C"
+    },
+    {
+      "id": 4,
+      "category": "Filler",
+      "name": "FLEXLINE"
+    },
+    {
+      "id": 3,
+      "category": "Filler",
+      "name": "GMF-C"
+    },
+    {
+      "id": 6,
+      "category": "Filler",
+      "name": "RUF"
+    },
+    {
+      "id": 5,
+      "category": "Filler",
+      "name": "RUF-C"
+    },
+    {
+      "id": 8,
+      "category": "Molded",
+      "name": "RIA10-C"
+    },
+    {
+      "id": 7,
+      "category": "Molded",
+      "name": "RIA14"
+    },
+    {
+      "id": 9,
+      "category": "Molded",
+      "name": "RIA4"
+    }
+  ],
+  "projects": [
+    {
+      "id": 1,
+      "user_id": 1,
+      "customer_name": "test 1",
+      "customer_location": "Turkey",
+      "description": "test 1",
+      "job_no": null,
+      "customer_chain_id": null,
+      "machine_type_id": 1,
+      "project_no": "M-10001",
+      "created_at": "2026-03-15T22:53:55.000Z",
+      "updated_at": "2026-03-15T22:53:55.000Z"
+    },
+    {
+      "id": 2,
+      "user_id": 5,
+      "customer_name": "asd",
+      "customer_location": "Albania",
+      "description": "",
+      "job_no": null,
+      "customer_chain_id": 3,
+      "machine_type_id": null,
+      "project_no": "M-10002",
+      "created_at": "2026-03-15T22:59:23.000Z",
+      "updated_at": "2026-03-15T22:59:23.000Z"
+    }
+  ],
+  "products": [
+    {
+      "id": 2,
+      "project_id": 2,
+      "product_name": "fsdfsdfsd",
+      "capacity": null,
+      "mix_type": null,
+      "no_of_flavor": null,
+      "weight_gr": null,
+      "volume_ml": null,
+      "has_inclusion": false,
+      "inclusion_type": null,
+      "inclusion_size_mm": null,
+      "filling_pattern": null,
+      "has_ripple_sauce": false,
+      "ripple_sauce_info": null,
+      "l1": null,
+      "l2": null,
+      "width": null,
+      "thickness": null,
+      "diameter": null,
+      "biscuit_l": null,
+      "biscuit_w": null,
+      "biscuit_thick": null,
+      "biscuit_diam": null,
+      "stick_type": null,
+      "stick_length": null,
+      "stick_width": null,
+      "stick_thickness": null,
+      "dipping_style": null,
+      "dipping_note": null,
+      "has_choc_tank_ingredients": false,
+      "choc_ingredient_type": null,
+      "choc_ingredient_size": null,
+      "has_lid": false,
+      "lid1_type": null,
+      "lid1_is_stackable": false,
+      "lid2_type": null,
+      "lid2_is_stackable": false,
+      "has_pencil_filler": false,
+      "pencil_filler_note": null,
+      "has_choc_disc": false,
+      "has_liquid_sauce_topping": false,
+      "liquid_sauce_info": null,
+      "has_dry_topping": false,
+      "dry_topping_info": null,
+      "has_wrapper": false,
+      "wrapper_info": null,
+      "is_eol_included": false,
+      "source_product_id": null,
+      "created_at": "2026-03-15T23:01:19.000Z",
+      "updated_at": "2026-03-15T23:01:19.000Z"
+    }
+  ],
+  "product_images": [],
+  "_meta": {
+    "created_at": "2026-03-15T23:04:49.910Z",
+    "tables": [
+      "users",
+      "customer_chains",
+      "machine_types",
+      "projects",
+      "products",
+      "product_images"
+    ],
+    "row_counts": {
+      "users": 2,
+      "customer_chains": 3,
+      "machine_types": 9,
+      "projects": 2,
+      "products": 1,
+      "product_images": 0
+    }
+  }
+}

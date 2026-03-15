@@ -1,16 +1,14 @@
 import { Response } from 'express';
-import multer from 'multer';
-import path from 'path';
 import pool from '../config/database';
 import { AuthRequest } from '../middlewares/auth';
 
 export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
-  const result = await pool.query(
-    'SELECT id, name, surname, email, role, is_approved, phone, company, position, profile_photo, preferred_language, created_at FROM users WHERE id=$1',
+  const [rows]: any = await pool.query(
+    'SELECT id, name, surname, email, role, is_approved, phone, company, position, profile_photo, preferred_language, created_at FROM users WHERE id = ?',
     [req.user!.id]
   );
-  if (result.rows.length === 0) { res.status(404).json({ message: 'User not found' }); return; }
-  res.json(result.rows[0]);
+  if (rows.length === 0) { res.status(404).json({ message: 'User not found' }); return; }
+  res.json(rows[0]);
 };
 
 export const updateMe = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -26,22 +24,25 @@ export const updateMe = async (req: AuthRequest, res: Response): Promise<void> =
 
   const fields: string[] = [];
   const values: any[] = [];
-  let idx = 1;
 
-  if (name !== undefined) { fields.push(`name=$${idx++}`); values.push(name); }
-  if (surname !== undefined) { fields.push(`surname=$${idx++}`); values.push(surname); }
-  if (phone !== undefined) { fields.push(`phone=$${idx++}`); values.push(phone); }
-  if (company !== undefined) { fields.push(`company=$${idx++}`); values.push(company); }
-  if (position !== undefined) { fields.push(`position=$${idx++}`); values.push(position); }
-  if (profile_photo !== undefined) { fields.push(`profile_photo=$${idx++}`); values.push(profile_photo); }
-  if (preferred_language !== undefined) { fields.push(`preferred_language=$${idx++}`); values.push(preferred_language); }
+  if (name !== undefined) { fields.push('name = ?'); values.push(name); }
+  if (surname !== undefined) { fields.push('surname = ?'); values.push(surname); }
+  if (phone !== undefined) { fields.push('phone = ?'); values.push(phone); }
+  if (company !== undefined) { fields.push('company = ?'); values.push(company); }
+  if (position !== undefined) { fields.push('position = ?'); values.push(position); }
+  if (profile_photo !== undefined) { fields.push('profile_photo = ?'); values.push(profile_photo); }
+  if (preferred_language !== undefined) { fields.push('preferred_language = ?'); values.push(preferred_language); }
 
   if (fields.length === 0) { res.status(400).json({ message: 'No fields to update' }); return; }
 
   values.push(req.user!.id);
-  const result = await pool.query(
-    `UPDATE users SET ${fields.join(', ')} WHERE id=$${idx} RETURNING id, name, surname, email, role, is_approved, phone, company, position, profile_photo, preferred_language, created_at`,
+  await pool.query(
+    `UPDATE users SET ${fields.join(', ')} WHERE id = ?`,
     values
   );
-  res.json(result.rows[0]);
+  const [rows]: any = await pool.query(
+    'SELECT id, name, surname, email, role, is_approved, phone, company, position, profile_photo, preferred_language, created_at FROM users WHERE id = ?',
+    [req.user!.id]
+  );
+  res.json(rows[0]);
 };
