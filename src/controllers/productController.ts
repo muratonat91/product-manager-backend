@@ -76,6 +76,22 @@ export const update = async (req: Request, res: Response): Promise<void> => {
   } catch (e: any) { res.status(400).json({ message: e.message }); }
 };
 
+export const copy = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { project_id } = req.body;
+    if (!project_id) { res.status(400).json({ message: 'project_id zorunlu' }); return; }
+    const product = await productService.copyProduct(+req.params.id, +project_id);
+    res.status(201).json(product);
+  } catch (e: any) { res.status(400).json({ message: e.message }); }
+};
+
+export const usage = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const data = await productService.getProductUsage(+req.params.id);
+    res.json(data);
+  } catch (e: any) { res.status(500).json({ message: e.message }); }
+};
+
 export const remove = async (req: Request, res: Response): Promise<void> => {
   try {
     await productService.deleteProduct(+req.params.id);

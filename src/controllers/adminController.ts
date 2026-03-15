@@ -52,6 +52,20 @@ export const getAllProjects = async (_req: AuthRequest, res: Response): Promise<
   res.json(result.rows);
 };
 
+export const deleteProject = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { id } = req.params;
+  const result = await pool.query('DELETE FROM projects WHERE id=$1 RETURNING id', [id]);
+  if (result.rows.length === 0) { res.status(404).json({ message: 'Project not found' }); return; }
+  res.json({ message: 'Deleted' });
+};
+
+export const deleteProduct = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { id } = req.params;
+  const result = await pool.query('DELETE FROM products WHERE id=$1 RETURNING id', [id]);
+  if (result.rows.length === 0) { res.status(404).json({ message: 'Product not found' }); return; }
+  res.json({ message: 'Deleted' });
+};
+
 export const getProjectProducts = async (req: AuthRequest, res: Response): Promise<void> => {
   const { projectId } = req.params;
   const products = await pool.query(

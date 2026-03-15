@@ -77,6 +77,43 @@ export const updateProduct = async (id: number, data: Record<string, any>): Prom
   return withImages(result.rows[0]);
 };
 
+export const copyProduct = async (sourceId: number, targetProjectId: number): Promise<Product> => {
+  const src = await pool.query('SELECT * FROM products WHERE id=$1', [sourceId]);
+  if (!src.rows.length) throw new Error('Source product not found');
+  const s = src.rows[0];
+
+  const data = Object.fromEntries(
+    ALLOWED_FIELDS.filter(f => s[f] !== null && s[f] !== undefined).map(f => [f, s[f]])
+  );
+  const fields = { project_id: targetProjectId, source_product_id: sourceId, ...data };
+  const keys = Object.keys(fields);
+  const vals = Object.values(fields);
+  const ph = keys.map((_, i) => `$${i + 1}`).join(', ');
+  const result = await pool.query(
+    `INSERT INTO products (${keys.join(', ')}) VALUES (${ph}) RETURNING *`, vals
+  );
+  const newProd = result.rows[0];
+  const images = await pool.query('SELECT image_path FROM product_images WHERE product_id=$1', [sourceId]);
+  for (const img of images.rows) {
+    await pool.query('INSERT INTO product_images (product_id, image_path) VALUES ($1,$2)', [newProd.id, img.image_path]);
+  }
+  return withImages(newProd);
+};
+
+export const getProductUsage = async (productId: number): Promise<any[]> => {
+  const result = await pool.query(
+    `SELECT pr.id AS project_id, pr.customer_name, pr.customer_location,
+            u.name AS user_name, p.created_at AS copied_at
+     FROM products p
+     JOIN projects pr ON pr.id = p.project_id
+     JOIN users u ON u.id = pr.user_id
+     WHERE p.source_product_id = $1
+     ORDER BY p.created_at DESC`,
+    [productId]
+  );
+  return result.rows;
+};
+
 export const deleteProduct = async (id: number): Promise<void> => {
   await pool.query('DELETE FROM products WHERE id=$1', [id]);
 };
