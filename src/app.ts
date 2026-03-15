@@ -5,6 +5,7 @@ import authRoutes from './routes/auth';
 import projectRoutes from './routes/projects';
 import productRoutes from './routes/products';
 import adminRoutes from './routes/admin';
+import userRoutes from './routes/users';
 
 const app = express();
 
@@ -16,5 +17,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/users', userRoutes);
 
 export default app;
