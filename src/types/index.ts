@@ -1,10 +1,15 @@
 export interface User {
   id: number;
   name: string;
+  surname?: string;
   email: string;
   password: string;
   role: string;
   is_approved: boolean;
+  phone?: string;
+  company?: string;
+  position?: string;
+  profile_photo?: string;
   created_at: Date;
 }
 
