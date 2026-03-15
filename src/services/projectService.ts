@@ -45,7 +45,9 @@ export const createProject = async (
   machine_type_id?: number | null
 ): Promise<Project> => {
   const result = await pool.query(
-    'INSERT INTO projects (user_id, customer_name, customer_location, description, job_no, customer_chain_id, machine_type_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+    `INSERT INTO projects (user_id, customer_name, customer_location, description, job_no, customer_chain_id, machine_type_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     RETURNING *, 'M-' || LPAD((10000 + id)::text, 5, '0') AS project_no`,
     [userId, customer_name, customer_location, description, job_no || null, customer_chain_id || null, machine_type_id || null]
   );
   return result.rows[0];
