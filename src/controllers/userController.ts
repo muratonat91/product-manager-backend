@@ -6,7 +6,7 @@ import { AuthRequest } from '../middlewares/auth';
 
 export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
   const result = await pool.query(
-    'SELECT id, name, surname, email, role, is_approved, phone, company, position, profile_photo, created_at FROM users WHERE id=$1',
+    'SELECT id, name, surname, email, role, is_approved, phone, company, position, profile_photo, preferred_language, created_at FROM users WHERE id=$1',
     [req.user!.id]
   );
   if (result.rows.length === 0) { res.status(404).json({ message: 'User not found' }); return; }
@@ -14,7 +14,7 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
 };
 
 export const updateMe = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { name, surname, phone, company, position } = req.body;
+  const { name, surname, phone, company, position, preferred_language } = req.body;
   const uploadedFile = (req as any).file;
 
   let profile_photo: string | undefined;
@@ -34,12 +34,13 @@ export const updateMe = async (req: AuthRequest, res: Response): Promise<void> =
   if (company !== undefined) { fields.push(`company=$${idx++}`); values.push(company); }
   if (position !== undefined) { fields.push(`position=$${idx++}`); values.push(position); }
   if (profile_photo !== undefined) { fields.push(`profile_photo=$${idx++}`); values.push(profile_photo); }
+  if (preferred_language !== undefined) { fields.push(`preferred_language=$${idx++}`); values.push(preferred_language); }
 
   if (fields.length === 0) { res.status(400).json({ message: 'No fields to update' }); return; }
 
   values.push(req.user!.id);
   const result = await pool.query(
-    `UPDATE users SET ${fields.join(', ')} WHERE id=$${idx} RETURNING id, name, surname, email, role, is_approved, phone, company, position, profile_photo, created_at`,
+    `UPDATE users SET ${fields.join(', ')} WHERE id=$${idx} RETURNING id, name, surname, email, role, is_approved, phone, company, position, profile_photo, preferred_language, created_at`,
     values
   );
   res.json(result.rows[0]);

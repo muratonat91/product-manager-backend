@@ -10,6 +10,7 @@ export interface User {
   company?: string;
   position?: string;
   profile_photo?: string;
+  preferred_language?: string;
   created_at: Date;
 }
 
@@ -22,6 +23,13 @@ export interface Project {
   created_at: Date;
   updated_at: Date;
   product_count?: number;
+  job_no?: string;
+  customer_chain_id?: number;
+  machine_type_id?: number;
+  // joined fields returned in queries:
+  customer_chain_name?: string;
+  machine_category?: string;
+  machine_type_name?: string;
 }
 
 export interface Product {

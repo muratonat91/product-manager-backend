@@ -18,16 +18,33 @@ export const getOne = async (req: AuthRequest, res: Response): Promise<void> => 
 
 export const create = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { customer_name, customer_location, description } = req.body;
-    const project = await projectService.createProject(req.user!.id, customer_name, customer_location, description);
+    const { customer_name, customer_location, description, job_no, customer_chain_id, machine_type_id } = req.body;
+    const project = await projectService.createProject(
+      req.user!.id,
+      customer_name,
+      customer_location,
+      description,
+      job_no,
+      Number(customer_chain_id) || null,
+      Number(machine_type_id) || null
+    );
     res.status(201).json(project);
   } catch (e: any) { res.status(400).json({ message: e.message }); }
 };
 
 export const update = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { customer_name, customer_location, description } = req.body;
-    const project = await projectService.updateProject(+req.params.id, req.user!.id, customer_name, customer_location, description);
+    const { customer_name, customer_location, description, job_no, customer_chain_id, machine_type_id } = req.body;
+    const project = await projectService.updateProject(
+      +req.params.id,
+      req.user!.id,
+      customer_name,
+      customer_location,
+      description,
+      job_no,
+      Number(customer_chain_id) || null,
+      Number(machine_type_id) || null
+    );
     res.json(project);
   } catch (e: any) { res.status(400).json({ message: e.message }); }
 };
