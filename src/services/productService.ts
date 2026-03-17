@@ -14,6 +14,18 @@ const ALLOWED_FIELDS = [
   'has_liquid_sauce_topping', 'liquid_sauce_info',
   'has_dry_topping', 'dry_topping_info',
   'has_wrapper', 'wrapper_info', 'is_eol_included',
+  'machine_type', 'product_type',
+  'to_be_commissioned', 'ice_cream_filling_type', 'total_volume',
+  'percentage_of_inclusion', 'inclusion_other_note', 'notes',
+  'no_of_lid', 'required_filling_station',
+  'dry_topping_type', 'dry_topping_size',
+  'ripple_sauce_pattern', 'ripple_pattern_other',
+  'has_sauce_topping', 'sauce_topping_info',
+  'cone_ee',
+  'stick_size', 'coating_type', 'coating_type_other',
+  'has_dry_coating', 'dry_coating_description', 'wrapper_description',
+  'biscuit_type',
+  'machine_size', 'dimension_state',
 ];
 
 async function withImages(product: any): Promise<Product> {
@@ -43,6 +55,25 @@ export const createProduct = async (projectId: number, data: Record<string, any>
   if (!data.product_name || String(data.product_name).trim() === '') {
     throw new Error('Ürün adı zorunludur');
   }
+  // Extract flavor volumes before filtering (flavor_volume_1, flavor_volume_2, ...)
+  const flavorVolumes: { flavor_no: number; volume: number }[] = [];
+  Object.entries(data).forEach(([k, v]) => {
+    const m = k.match(/^flavor_volume_(\d+)$/);
+    if (m && v !== '' && v !== undefined && v !== null) {
+      flavorVolumes.push({ flavor_no: parseInt(m[1]), volume: parseInt(String(v)) });
+    }
+  });
+
+  // Extract lid data (lid_1_style, lid_1_type, lid_1_style_other, ...)
+  const lidNos = new Set<number>();
+  Object.keys(data).forEach(k => { const m = k.match(/^lid_(\d+)_/); if (m) lidNos.add(parseInt(m[1])); });
+  const lidData = Array.from(lidNos).map(n => ({
+    lid_no: n,
+    lid_style: String(data[`lid_${n}_style`] || ''),
+    lid_style_other: String(data[`lid_${n}_style_other`] || ''),
+    lid_type: String(data[`lid_${n}_type`] || ''),
+  }));
+
   const filtered = Object.fromEntries(
     Object.entries(data).filter(([k, v]) => ALLOWED_FIELDS.includes(k) && v !== undefined && v !== null && v !== '')
   );
@@ -54,11 +85,44 @@ export const createProduct = async (projectId: number, data: Record<string, any>
     `INSERT INTO products (${keys.join(', ')}) VALUES (${placeholders})`,
     values
   );
-  const [productRows]: any = await pool.query('SELECT * FROM products WHERE id = ?', [result.insertId]);
+  const productId = result.insertId;
+  const [productRows]: any = await pool.query('SELECT * FROM products WHERE id = ?', [productId]);
   const product = productRows[0];
   for (const imgPath of imagePaths) {
-    await pool.query('INSERT INTO product_images (product_id, image_path) VALUES (?, ?)', [product.id, imgPath]);
+    await pool.query('INSERT INTO product_images (product_id, image_path) VALUES (?, ?)', [productId, imgPath]);
   }
+  for (const fv of flavorVolumes) {
+    await pool.query('INSERT INTO product_flavor_volumes (product_id, flavor_no, volume) VALUES (?, ?, ?)', [productId, fv.flavor_no, fv.volume]);
+  }
+  for (const lid of lidData) {
+    await pool.query(
+      'INSERT INTO product_lids (product_id, lid_no, lid_style, lid_style_other, lid_type) VALUES (?, ?, ?, ?, ?)',
+      [productId, lid.lid_no, lid.lid_style, lid.lid_style_other, lid.lid_type]
+    );
+  }
+
+  // Extract EOL pack patterns (eol_1_loader, eol_1_no_of_flavor, ...)
+  const eolNos = new Set<number>();
+  Object.keys(data).forEach(k => { const m = k.match(/^eol_(\d+)_/); if (m) eolNos.add(parseInt(m[1])); });
+  for (const n of Array.from(eolNos)) {
+    await pool.query(
+      `INSERT INTO product_eol_pack_patterns
+       (product_id, pattern_no, type_of_loader, loader_other_note, no_of_flavor, no_of_product_in_box, interleaved, no_of_layers, placement_rows, placement_cols)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        productId, n,
+        data[`eol_${n}_loader`] || '',
+        data[`eol_${n}_loader_other`] || '',
+        parseInt(data[`eol_${n}_no_of_flavor`]) || null,
+        parseInt(data[`eol_${n}_no_of_product_in_box`]) || null,
+        data[`eol_${n}_interleaved`] === 'true' ? 1 : 0,
+        parseInt(data[`eol_${n}_no_of_layers`]) || null,
+        parseInt(data[`eol_${n}_placement_rows`]) || null,
+        parseInt(data[`eol_${n}_placement_cols`]) || null,
+      ]
+    );
+  }
+
   return withImages(product);
 };
 

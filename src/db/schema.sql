@@ -73,11 +73,70 @@ CREATE TABLE IF NOT EXISTS products (
   has_dry_topping TINYINT(1) NOT NULL DEFAULT 0, dry_topping_info TEXT,
   has_wrapper TINYINT(1) NOT NULL DEFAULT 0, wrapper_info TEXT,
   is_eol_included TINYINT(1) NOT NULL DEFAULT 0,
+  machine_type VARCHAR(50),
+  product_type VARCHAR(100),
+  to_be_commissioned TINYINT(1) NOT NULL DEFAULT 0,
+  ice_cream_filling_type VARCHAR(50),
+  total_volume INT,
+  percentage_of_inclusion INT,
+  inclusion_other_note TEXT,
+  notes TEXT,
+  no_of_lid INT,
+  required_filling_station INT,
+  dry_topping_type VARCHAR(150),
+  dry_topping_size INT,
+  ripple_sauce_pattern VARCHAR(100),
+  ripple_pattern_other TEXT,
+  has_sauce_topping TINYINT(1) NOT NULL DEFAULT 0,
+  sauce_topping_info TEXT,
+  cone_ee VARCHAR(10),
+  stick_size VARCHAR(100),
+  coating_type VARCHAR(100),
+  coating_type_other TEXT,
+  has_dry_coating TINYINT(1) NOT NULL DEFAULT 0,
+  dry_coating_description TEXT,
+  wrapper_description TEXT,
+  biscuit_type VARCHAR(150),
+  machine_size VARCHAR(10),
+  dimension_state VARCHAR(50),
   source_product_id INT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
   FOREIGN KEY (source_product_id) REFERENCES products(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS product_eol_pack_patterns (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  product_id INT NOT NULL,
+  pattern_no INT NOT NULL,
+  type_of_loader VARCHAR(50),
+  loader_other_note TEXT,
+  no_of_flavor INT,
+  no_of_product_in_box INT,
+  interleaved TINYINT(1) NOT NULL DEFAULT 0,
+  no_of_layers INT,
+  placement_rows INT,
+  placement_cols INT,
+  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS product_lids (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  product_id INT NOT NULL,
+  lid_no INT NOT NULL,
+  lid_style VARCHAR(100),
+  lid_style_other TEXT,
+  lid_type VARCHAR(50),
+  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS product_flavor_volumes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  product_id INT NOT NULL,
+  flavor_no INT NOT NULL,
+  volume INT NOT NULL,
+  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS product_images (
